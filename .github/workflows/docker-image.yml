@@ -8,11 +8,29 @@ on:
 
 jobs:
 
-  build:
+  run-keycloak:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Set up Docker
+      run: |
+        sudo apt-get update
+        sudo apt-get install docker-ce docker-ce-cli containerd.io
+
+    - name: Run Keycloak Container
+      run: |
+        docker run -d \
+          -p 9090:8443 \
+          -e KEYCLOAK_ADMIN=admin \
+          -e KEYCLOAK_ADMIN_PASSWORD=admin \
+          -v ~/keycloak-conf:/opt/keycloak/conf \
+          --name keycloak \
+          quay.io/keycloak/keycloak:latest start \
+          --https-key-store-file=/opt/keycloak/conf/keycloak.jks \
+          --https-key-store-password=password \
+          --https-port=8443 \
+          --http-enabled=false \
+          --hostname=localhost \
+          --hostname-strict=false \
+          --http-relative-path=/auth
