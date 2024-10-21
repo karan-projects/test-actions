@@ -8,29 +8,33 @@ on:
 
 jobs:
 
-  run-keycloak:
+  run-keycloak-remote:
 
     runs-on: ubuntu-latest
 
     steps:
-    - name: Set up Docker
-      run: |
-        sudo apt-get update
-        sudo apt-get install docker-ce docker-ce-cli containerd.io
+    - name: Install SSH Client
+      run: sudo apt-get update && sudo apt-get install -y openssh-client
 
-    - name: Run Keycloak Container
-      run: |
-        docker run -d \
-          -p 9090:8443 \
-          -e KEYCLOAK_ADMIN=admin \
-          -e KEYCLOAK_ADMIN_PASSWORD=admin \
-          -v ~/keycloak-conf:/opt/keycloak/conf \
-          --name keycloak \
-          quay.io/keycloak/keycloak:latest start \
-          --https-key-store-file=/opt/keycloak/conf/keycloak.jks \
-          --https-key-store-password=password \
-          --https-port=8443 \
-          --http-enabled=false \
-          --hostname=localhost \
-          --hostname-strict=false \
-          --http-relative-path=/auth
+    - name: Connect to Remote Server and Run Keycloak
+      uses: appleboy/ssh-action@v0.1.6
+      with:
+        host: 172.17.37.252    # Add your remote server's IP in GitHub secrets
+        username: karsriva  # Add the SSH username to GitHub secrets
+        password: yt_xk39B # Add your SSH password to GitHub secrets
+        port: 22  # Default SSH port; change if needed
+        script: |
+          docker run -d \
+            -p 9090:8443 \
+            -e KEYCLOAK_ADMIN=admin \
+            -e KEYCLOAK_ADMIN_PASSWORD=admin \
+            -v ~/keycloak-conf:/opt/keycloak/conf \
+            --name keycloak \
+            quay.io/keycloak/keycloak:latest start \
+            --https-key-store-file=/opt/keycloak/conf/keycloak.jks \
+            --https-key-store-password=password \
+            --https-port=8443 \
+            --http-enabled=false \
+            --hostname=localhost \
+            --hostname-strict=false \
+            --http-relative-path=/auth
